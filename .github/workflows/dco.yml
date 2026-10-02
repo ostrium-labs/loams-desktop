@@ -23,7 +23,7 @@ jobs:
           status=0
           for sha in $(git rev-list "$BASE..$HEAD"); do
             email=$(git log -1 --format='%ae' "$sha")
-            signoffs=$(git show -s --format=%B "$sha" | sed -n 's/^Signed-off-by: .*<\(.*\)>[[:space:]]*$/\1/Ip')
+            signoffs=$(git show -s --format=%B "$sha" | git interpret-trailers --parse | sed -n 's/^Signed-off-by: .*<\(.*\)>[[:space:]]*$/\1/Ip')
             if ! printf '%s\n' "$signoffs" | grep -qixF -- "$email"; then
               echo "::error::commit $sha is missing 'Signed-off-by: ... <$email>' (use git commit -s)"
               status=1
