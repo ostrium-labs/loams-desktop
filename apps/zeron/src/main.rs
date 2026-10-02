@@ -98,9 +98,14 @@ const DEFAULT_EDGE_URL: &str = "https://edge.loams.invalid";
 /// set it to the empty string — or set a dev bearer via `ZERON_EDGE_TOKEN` — to
 /// force dev-mode auth instead.
 ///
-/// loams: empty. Zeron's WorkOS tenant belongs to zeron's backend; Loams signs
-/// in at Authentik through `zeron loams login` (design 37 section 21, D485).
-const DEFAULT_WORKOS_CLIENT_ID: &str = "";
+/// loams: a placeholder that is not zeron's tenant. Zeron's WorkOS tenant
+/// belongs to zeron's backend; Loams signs in at Authentik through
+/// `zeron loams login` (design 37 section 18, D486). It is non-empty on
+/// purpose: an empty id selects the Development workspace scope, which
+/// `zeron status` reports as unhealthy. With a placeholder and no saved session
+/// the app starts in the normal local-only profile, offline, as upstream does;
+/// a WorkOS sign-in attempt fails closed.
+const DEFAULT_WORKOS_CLIENT_ID: &str = "client_loams_unconfigured";
 
 fn edge_url_from_env() -> String {
     std::env::var("ZERON_EDGE_URL")
@@ -118,7 +123,7 @@ fn workos_client_id_from_env(edge_token: &Option<String>) -> Option<String> {
         Ok(v) if v.trim().is_empty() => None,
         Ok(v) => Some(v),
         Err(_) if edge_token.is_some() => None,
-        Err(_) => Some(DEFAULT_WORKOS_CLIENT_ID.to_owned()).filter(|id| !id.is_empty()),
+        Err(_) => Some(DEFAULT_WORKOS_CLIENT_ID.into()),
     }
 }
 

@@ -57,7 +57,7 @@ Every change to an inherited file is either a one-line hook marked `// loams:` o
 |---|---|---|---|
 | `Cargo.toml` | Two workspace members and two path dependencies | New crates | No |
 | `apps/zeron/Cargo.toml` | Depends on `loams-link` | The `loams` subcommand | No |
-| `apps/zeron/src/main.rs` | `Loams` subcommand and dispatch; stdout-is-protocol check also covers `loams bot-acp`; **WorkOS client id empty; default edge host `edge.loams.invalid`** | Never contact zeron's cloud or install its binaries | Partly (an "unset" default) |
+| `apps/zeron/src/main.rs` | `Loams` subcommand and dispatch; stdout-is-protocol check also covers `loams bot-acp`; **WorkOS client id a non-zeron placeholder; default edge host `edge.loams.invalid`** | Never contact zeron's cloud or install its binaries | Partly (an "unset" default) |
 | `crates/update/src/lib.rs` | The two release-page URLs point at this fork | The advisory update strip must not send people to upstream | No |
 | `crates/ui/Cargo.toml`, `crates/ui/src/lib.rs` | Depends on `loams-brand`; window title and `app_id` read from it | Branding | No |
 | `crates/ui/src/icons.rs`, `crates/ui/assets/icons/loams-mark.svg` | One icon | The Loams Bot picker icon | No |
@@ -83,7 +83,7 @@ Upstream ships about two releases a day, so rebase onto a tag at least every two
 
 ## Security notes
 
-- A Loams build **never contacts zeron's backend and never installs zeron's binaries**: the default WorkOS client id is empty and the default edge host does not resolve. Set `ZERON_EDGE_URL` only to a feed you control and trust. A signed update manifest is plan AP1n Task 9.
+- A Loams build **never contacts zeron's backend and never installs zeron's binaries**: the default WorkOS client id is a placeholder (not zeron's tenant) and the default edge host does not resolve. Set `ZERON_EDGE_URL` only to a feed you control and trust. A signed update manifest is plan AP1n Task 9.
 - Zeron's workflows that need its secrets or its cloud (`deploy.yml`, `testflight.yml`, `cursor-sdk-update.yml`, `linux-installer.yml` against zeron.sh) are disabled in this repository's Actions settings, not edited, so rebases stay clean.
 - Agents run as subprocesses with your rights. Loams tokens are never given to them. See design 37 sections 18.4 and 18.7.
 
