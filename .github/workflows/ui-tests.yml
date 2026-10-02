@@ -17,7 +17,7 @@ on:
       - 'apps/ios/**'
       - '.github/workflows/ui-tests.yml'
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'Cargo.toml'
       - 'Cargo.lock'
