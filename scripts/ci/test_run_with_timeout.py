@@ -10,9 +10,9 @@ class TimeoutTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             result = subprocess.run(
                 [sys.executable, str(Path(__file__).with_name('run-with-timeout.py')),
-                 '--timeout', '0.2', '--diagnostics', directory,
+                 '--timeout', '2', '--diagnostics', directory,
                  sys.executable, '-u', '-c', source],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True, text=True, timeout=30,
             )
             logs = list(Path(directory).glob('*.log'))
             return result, ''.join(path.read_text() for path in logs)

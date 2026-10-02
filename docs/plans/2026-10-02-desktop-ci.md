@@ -35,6 +35,7 @@ The custom main-thread native test must retain that harness.
 | # | Ruling | Reason |
 |---|---|---|
 | 1 | ZDOTDIR is passed as a child environment override; do not change HOME or production terminal defaults. | Prevents global compinit prompts and zsh's new-user wizard without changing the user's shell configuration. |
+| 3 | Allow two seconds for the watchdog fixture child to start and 30 seconds for the outer regression invocation; retain the real native test deadline at 60 seconds. | CI process startup and macOS diagnostics need margin; all exit/output assertions remain. |
 | 2 | Bound test execution separately from compilation, retain the 45-minute job limit. | The observed 4m28s compilation is not a 50ms test hang. A stalled test now fails after 60s with diagnostics; #305 tracks any future sampled hang. |
 
 ## Evidence
