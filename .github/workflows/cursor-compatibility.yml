@@ -10,7 +10,7 @@ on:
       - 'scripts/*cursor-sdk*'
       - '.github/workflows/cursor-*.yml'
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'crates/harness/**'
       - 'crates/doc/**'
