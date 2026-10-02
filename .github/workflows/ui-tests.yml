@@ -38,12 +38,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ui-tests-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' }}
 
 jobs:
   changes:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_LIGHT || 'ubuntu-latest') }}
     permissions:
       pull-requests: read
     outputs:
@@ -79,7 +79,7 @@ jobs:
   # scripts/ci/test-core.sh). Replaces session-sync-regressions and the Rust
   # steps of cursor-compatibility and preview-tests.
   core-tests:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_DEV_HEAVY || 'depot-ubuntu-24.04-4') }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
         run: scripts/ci/test-core.sh
 
   ui-tests:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_DEV_HEAVY || 'depot-ubuntu-24.04-4') }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -228,7 +228,7 @@ jobs:
           if-no-files-found: ignore
 
   linux-browser:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_DEV_HEAVY || 'depot-ubuntu-24.04-4') }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
