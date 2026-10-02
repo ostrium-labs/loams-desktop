@@ -1089,6 +1089,14 @@ mod initial_command_tests {
     #[tokio::test]
     async fn long_command_survives_delayed_shell_startup_and_script_is_cleaned_up() {
         let root = tempfile::tempdir().unwrap();
+        // ZDOTDIR affects only this test's child shells. Disable the global
+        // rc files (Ubuntu compinit may prompt) and the new-user wizard.
+        let zdotdir = root.path().join("zsh");
+        std::fs::create_dir(&zdotdir).unwrap();
+        std::fs::write(zdotdir.join(".zshenv"), "setopt no_global_rcs\n").unwrap();
+        std::fs::write(zdotdir.join(".zshrc"), "").unwrap();
+        let environment =
+            HashMap::from([("ZDOTDIR".to_string(), zdotdir.to_str().unwrap().to_string())]);
         let terminals = Terminals::new();
         for shell in ["/bin/sh", "/bin/bash", "/bin/zsh"] {
             if !std::path::Path::new(shell).exists() {
@@ -1105,14 +1113,22 @@ mod initial_command_tests {
             std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o700)).unwrap();
             let output = root.path().join("result");
             let payload = "a".repeat(6000);
-            let command = format!("printf '%s' '{payload}' > result");
+            let command = if shell == "/bin/zsh" {
+                // A login shell must not enter the runner's global compinit
+                // prompt before it reads the initial command.
+                format!(
+                    "if [[ -o globalrcs ]]; then printf 'global rc files enabled' > result; else printf '%s' '{payload}' > result; fi"
+                )
+            } else {
+                format!("printf '%s' '{payload}' > result")
+            };
             let session = terminals
                 .open_session(
                     root.path().to_str().unwrap(),
                     80,
                     24,
                     wrapper.to_str(),
-                    &HashMap::new(),
+                    &environment,
                     Some(&command),
                 )
                 .unwrap();

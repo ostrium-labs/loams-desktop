@@ -70,3 +70,16 @@ distinguish another frame-source failure from a blocked main thread.
 - Apple documents [screen wake](https://developer.apple.com/documentation/appkit/nsworkspace/screensdidwakenotification)
   and [session activation](https://developer.apple.com/documentation/appkit/nsworkspace/sessiondidbecomeactivenotification)
   notifications through the workspace notification center.
+
+## CI execution deadline (2026-10-02)
+
+[loams#305](https://github.com/ostrium-labs/loams/issues/305) tracks the CI
+follow-up. Dev run [37037266833](https://github.com/ostrium-labs/loams-desktop/actions/runs/37037266833)
+passed: the frame-source step built for 4m28s and the native executable then
+passed in about 50ms. Its 39m39s job duration was mostly compilation; this
+run does not establish a native-test hang.
+
+CI now separates compilation from the executable's 60-second deadline. A
+timeout fails with exit 124, retains stdout/stderr, captures `sample` and the
+process list, and uploads `frame-recovery-diagnostics`. Follow up on #305 with
+that sample if the executable itself stalls. No test is skipped or retried.
