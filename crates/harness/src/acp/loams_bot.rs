@@ -55,17 +55,52 @@ fn loams_bot_spec() -> AcpAgentSpec {
     }
 }
 
+/// The running executable, but only when it is the `zeron` app itself. Test
+/// fixtures and examples link the same registry; launching *them* with
+/// `loams bot-acp` would start another copy of the fixture (a second window
+/// that steals focus, which broke `macos-frame-recovery`), so for any other
+/// program Loams Bot reports "not installed" instead.
+fn zeron_exe() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    is_zeron(&exe).then_some(exe)
+}
+
+fn is_zeron(path: &std::path::Path) -> bool {
+    path.file_stem().is_some_and(|stem| stem == "zeron")
+}
+
 fn current_exe_paths() -> Vec<PathBuf> {
-    std::env::current_exe().into_iter().collect()
+    zeron_exe().into_iter().collect()
 }
 
 impl AcpHarness {
     /// Loams Bot (`zeron loams bot-acp`): this binary, speaking ACP on stdio.
     pub fn loams_bot() -> Self {
         let harness = Self::with_spec(loams_bot_spec());
-        match std::env::current_exe() {
-            Ok(exe) => harness.with_executable(exe),
-            Err(_) => harness,
+        match zeron_exe() {
+            Some(exe) => harness.with_executable(exe),
+            None => harness,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_zeron;
+    use std::path::Path;
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_exe_suffix_is_accepted() {
+        assert!(is_zeron(Path::new(r"C:\Loams\zeron.exe")));
+    }
+
+    #[test]
+    fn only_the_zeron_binary_is_a_launch_target() {
+        assert!(is_zeron(Path::new("/opt/loams/zeron")));
+        assert!(!is_zeron(Path::new(
+            "/tmp/Fixture.app/Contents/MacOS/fixture"
+        )));
+        assert!(!is_zeron(Path::new("/target/debug/deps/zeron_engine-1a2b")));
     }
 }
