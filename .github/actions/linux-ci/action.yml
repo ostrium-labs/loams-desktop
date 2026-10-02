@@ -28,6 +28,12 @@ inputs:
 runs:
   using: composite
   steps:
+    # zsh on a runner image with no ~/.zshrc starts its first-run wizard and
+    # waits for input, which hangs the terminal tests that spawn it.
+    - name: Quiet the zsh first-run wizard
+      shell: bash
+      run: touch "$HOME/.zshrc"
+
     - name: Rust toolchain
       shell: bash
       run: rustup show active-toolchain || rustup toolchain install
