@@ -28,11 +28,15 @@ inputs:
 runs:
   using: composite
   steps:
-    # zsh on a runner image with no ~/.zshrc starts its first-run wizard and
-    # waits for input, which hangs the terminal tests that spawn it.
-    - name: Quiet the zsh first-run wizard
+    # Interactive zsh on a runner image prompts on stdin (the new-user wizard
+    # without ~/.zshrc, then Ubuntu's global compinit on "insecure
+    # directories"), which hangs the terminal tests that spawn it. Give it an
+    # empty ~/.zshrc and skip the global rc files.
+    - name: Make interactive zsh non-interactive-safe
       shell: bash
-      run: touch "$HOME/.zshrc"
+      run: |
+        touch "$HOME/.zshrc"
+        echo 'setopt no_global_rcs' > "$HOME/.zshenv"
 
     - name: Rust toolchain
       shell: bash
