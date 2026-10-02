@@ -38,12 +38,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ui-tests-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' }}
 
 jobs:
   changes:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_LIGHT || 'ubuntu-latest') }}
     permissions:
       pull-requests: read
     outputs:
@@ -79,7 +79,7 @@ jobs:
   # scripts/ci/test-core.sh). Replaces session-sync-regressions and the Rust
   # steps of cursor-compatibility and preview-tests.
   core-tests:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_DEV_HEAVY || 'depot-ubuntu-24.04-4') }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -87,11 +87,33 @@ jobs:
         with:
           rust-cache: core
           save-rust-cache: 'true'
+      - name: DEBUG zsh pty probe
+        if: always()
+        shell: bash
+        run: |
+          echo "HOME=$HOME ZDOTDIR=${ZDOTDIR:-} SHELL=${SHELL:-}"; ls -la ~ | head -30; zsh --version; ls -la /etc/zsh /bin/zsh
+          d=$(mktemp -d); printf '%s' "printf hello > $d/result" > $d/cmd.sh
+          printf '#!/bin/sh\nsleep 0.2\nexec /bin/zsh "$@"\n' > $d/slow; chmod 700 $d/slow
+          python3 - "$d" <<'PY'
+          import pty,os,time,select,sys
+          d=sys.argv[1]
+          pid,fd=pty.fork()
+          if pid==0:
+              os.chdir(d); os.environ['ZERON_ACTION_SCRIPT']=d+'/cmd.sh'; os.execv(d+'/slow',[d+'/slow','-l'])
+          time.sleep(0.05); os.write(fd,b'. "$ZERON_ACTION_SCRIPT"\r')
+          t=time.time(); out=b''
+          while time.time()-t<8:
+              r,_,_=select.select([fd],[],[],0.2)
+              if r:
+                  try: out+=os.read(fd,4096)
+                  except OSError: break
+          print(out[-1500:]); print(os.path.exists(d+'/result'))
+          PY
       - name: Harness, engine, sync, update, doc and preview tests
         run: scripts/ci/test-core.sh
 
   ui-tests:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_DEV_HEAVY || 'depot-ubuntu-24.04-4') }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -228,7 +250,7 @@ jobs:
           if-no-files-found: ignore
 
   linux-browser:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && (vars.RUNNER_MAIN || 'blacksmith-4vcpu-ubuntu-2404') || (vars.RUNNER_DEV_HEAVY || 'depot-ubuntu-24.04-4') }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4

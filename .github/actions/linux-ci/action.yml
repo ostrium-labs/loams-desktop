@@ -28,6 +28,16 @@ inputs:
 runs:
   using: composite
   steps:
+    # Interactive zsh on a runner image prompts on stdin (the new-user wizard
+    # without ~/.zshrc, then Ubuntu's global compinit on "insecure
+    # directories"), which hangs the terminal tests that spawn it. Give it an
+    # empty ~/.zshrc and skip the global rc files.
+    - name: Make interactive zsh non-interactive-safe
+      shell: bash
+      run: |
+        touch "$HOME/.zshrc"
+        echo 'setopt no_global_rcs' > "$HOME/.zshenv"
+
     - name: Rust toolchain
       shell: bash
       run: rustup show active-toolchain || rustup toolchain install
