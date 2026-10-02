@@ -389,7 +389,7 @@ fn open_main_window(
                 // Linux/Windows `appears_transparent` hides the system titlebar
                 // for our custom-drawn chrome; harmless where unsupported.
                 titlebar: Some(TitlebarOptions {
-                    title: cfg!(target_os = "windows").then(|| "Zeron".into()),
+                    title: cfg!(target_os = "windows").then(|| loams_brand::PRODUCT_NAME.into()), // loams: brand
                     appears_transparent: true,
                     // Native lights are 14px tall: top 14 → center 21, matching
                     // the 38px titlebar row with 4px top-only content padding.
@@ -419,7 +419,7 @@ fn open_main_window(
                 // — if these two ever disagree, vibrancy dies on the first theme
                 // change and never comes back.
                 window_background: theme::Theme::of(cx).window_background_appearance(),
-                app_id: Some("zeron".into()),
+                app_id: Some(loams_brand::APP_ID.into()), // loams: brand
                 ..Default::default()
             },
             move |window, cx| {

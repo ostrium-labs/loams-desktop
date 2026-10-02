@@ -1,0 +1,126 @@
+name: Loams
+
+# Checks for the Loams additions (docs: LOAMS.md). Upstream's own workflows
+# (ui-tests, windows, release) already build and test the shared crates on
+# Linux, Windows and macOS for every `crates/**` change; this one adds the
+# fast Loams crate tests on all three, a built-binary smoke test on Linux and
+# Windows, and the generated-code drift check.
+
+on:
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - 'crates/**'
+      - 'apps/zeron/**'
+      - 'scripts/loams/**'
+      - '.github/workflows/loams.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - 'crates/**'
+      - 'apps/zeron/**'
+      - 'scripts/loams/**'
+      - '.github/workflows/loams.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: loams-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # No GPUI here, so these are minutes, not tens of minutes.
+  link:
+    name: loams crates (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        shell: bash
+        run: rustup show active-toolchain || rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+          cache-on-failure: true
+      - name: Test loams-brand and loams-link
+        run: cargo test --locked -p loams-brand -p loams-link
+      - name: Clippy (Linux)
+        if: runner.os == 'Linux'
+        run: cargo clippy --locked -p loams-brand -p loams-link --all-targets -- -D warnings
+
+  # Builds the real binary and runs the Loams commands against the in-process
+  # mock: the whole path (CLI, Connect, A2A, ACP) with no server.
+  app-linux:
+    name: app build and smoke (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-ci
+        with:
+          rust-cache: loams-app
+          save-rust-cache: 'true'
+          apt-cache: gpui
+          apt-packages: >-
+            libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev
+            libx11-dev libxcb1-dev libx11-xcb-dev
+            libfontconfig1-dev libfreetype-dev libasound2-dev
+            libvulkan-dev pkg-config cmake libwebkit2gtk-4.1-dev libjson-glib-dev
+      - name: Build zeron
+        run: cargo build --locked -p zeron
+      - name: Smoke test against the mock
+        env:
+          LOAMS_MOCK: '1'
+        run: bash scripts/loams/smoke.sh target/debug/zeron
+
+  app-windows:
+    name: app build and smoke (Windows)
+    runs-on: windows-2022
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-ci-setup
+      - name: Build zeron
+        run: cargo build --release --locked -p zeron
+      - name: Smoke test against the mock
+        env:
+          LOAMS_MOCK: '1'
+        run: ./scripts/loams/smoke.ps1 -Exe target/release/zeron.exe
+
+  protos:
+    name: generated code is current
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+          cache-on-failure: true
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+      - name: Install the protoc plugins
+        run: scripts/loams/install-proto-plugins.sh
+      - name: Regenerate and compare
+        run: |
+          export PATH="$HOME/.local/share/loams-tools/bin:$PATH"
+          scripts/loams/gen-protos.sh
+          git diff --exit-code -- crates/loams-link/src/gen

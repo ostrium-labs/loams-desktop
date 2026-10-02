@@ -5468,6 +5468,7 @@ pub(crate) fn harness_brand_icon(harness: HarnessId) -> (&'static str, Option<gp
         // The pixel-"o" from opencode's wordmark (their favicon), monochrome.
         HarnessId::Opencode => (crate::icons::OPENCODE_MARK, None),
         HarnessId::Antigravity => (crate::icons::ANTIGRAVITY_MARK, None),
+        HarnessId::LoamsBot => (crate::icons::LOAMS_MARK, None), // loams
     }
 }
 

@@ -756,6 +756,23 @@ pub fn default_registry() -> HarnessRegistry {
         Box::new(|| zeron_harness::AcpHarness::antigravity().installed()),
         Box::new(|| Ok(Arc::new(zeron_harness::AcpHarness::antigravity()) as Arc<dyn Harness>)),
     );
+    // loams: Loams Bot over ACP (`zeron loams bot-acp`, the running binary),
+    // same lazy pattern. Prompts are A2A messages, so steers land at turn
+    // boundaries and there is no effort ladder. Installed means "this binary".
+    registry.register_lazy(
+        HarnessDescriptor {
+            id: HarnessId::LoamsBot,
+            name: "Loams Bot".into(),
+            supports_steering: true,
+            steering_mode: SteeringMode::TurnBoundary,
+            reasoning_levels: Vec::new(),
+            installed: true,
+            can_install: false,
+            enabled: None,
+        },
+        Box::new(|| zeron_harness::AcpHarness::loams_bot().installed()),
+        Box::new(|| Ok(Arc::new(zeron_harness::AcpHarness::loams_bot()) as Arc<dyn Harness>)),
+    );
     registry
 }
 
@@ -838,7 +855,8 @@ mod tests {
                 HarnessId::Hermes,
                 HarnessId::Pi,
                 HarnessId::Opencode,
-                HarnessId::Antigravity
+                HarnessId::Antigravity,
+                HarnessId::LoamsBot // loams
             ]
         );
         assert!(registry.resolve(HarnessId::Mock).is_ok());
