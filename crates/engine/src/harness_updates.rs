@@ -272,6 +272,14 @@ fn provider(id: HarnessId) -> ProviderSpec {
             update_args: None,
             manual_command: "Update the configured Antigravity ACP server",
         },
+        // loams: ships inside the app; `zeron --version` is the app version and
+        // the app updater (not a provider updater) is what changes it.
+        HarnessId::LoamsBot => ProviderSpec {
+            version_args: &["--version"],
+            latest: LatestSource::Manual,
+            update_args: None,
+            manual_command: "Update Loams Desktop",
+        },
         HarnessId::Mock => ProviderSpec {
             version_args: &["--version"],
             latest: LatestSource::Manual,

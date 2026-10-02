@@ -52,7 +52,7 @@ fn methods(id: HarnessId, platform: Platform) -> Vec<Method> {
     use Method::*;
     let windows = platform == Platform::Windows;
     match id {
-        Mock => vec![],
+        Mock | LoamsBot => vec![], // loams: ships inside the app
         Antigravity => vec![Archive],
         ClaudeCode if windows => vec![PowerShell("irm https://claude.ai/install.ps1 | iex")],
         ClaudeCode => vec![Shell(
@@ -158,7 +158,7 @@ pub fn manual_command(id: HarnessId) -> Option<&'static str> {
         Grok => "npm install -g @xai-official/grok",
         Hermes => "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash",
         Devin => "curl -fsSL https://cli.devin.ai/install.sh | bash",
-        Antigravity | Mock => return None,
+        Antigravity | Mock | LoamsBot => return None,
     })
 }
 
@@ -175,6 +175,7 @@ fn cli_and_dir(id: HarnessId) -> (&'static str, &'static str) {
         Devin => ("devin", "~/.local/bin"),
         Antigravity => ("agy_acp_server", "~/.zeron/adapters"),
         Mock => ("mock", "PATH"),
+        LoamsBot => ("zeron", "the Loams Desktop install"), // loams
     }
 }
 
@@ -190,6 +191,7 @@ pub fn installed(id: HarnessId) -> bool {
         Hermes => crate::AcpHarness::hermes().installed(),
         Devin => crate::AcpHarness::devin().installed(),
         Antigravity => crate::AcpHarness::antigravity().installed(),
+        LoamsBot => crate::AcpHarness::loams_bot().installed(), // loams
         Mock => false,
     }
 }

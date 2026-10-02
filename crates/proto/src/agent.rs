@@ -23,6 +23,9 @@ pub enum HarnessId {
     /// google's antigravity agent over acp (`agy_acp_server`, installed from
     /// its pinned release archive).
     Antigravity,
+    /// loams: Loams Bot, driven over ACP by `zeron loams bot-acp` (the
+    /// `loams-link` crate). Wire name `loams-bot`.
+    LoamsBot,
     /// Test harness; never shown in production pickers.
     Mock,
 }

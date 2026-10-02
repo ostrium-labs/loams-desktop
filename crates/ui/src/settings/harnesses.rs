@@ -112,6 +112,7 @@ pub fn cli_name(harness: HarnessId) -> &'static str {
         HarnessId::Pi => "pi",
         HarnessId::Opencode => "opencode",
         HarnessId::Antigravity => "Antigravity",
+        HarnessId::LoamsBot => "zeron", // loams: ships inside the app
         HarnessId::Mock => "mock",
     }
 }

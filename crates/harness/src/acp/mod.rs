@@ -29,6 +29,7 @@
 
 mod antigravity_paths;
 mod devin_models;
+mod loams_bot; // loams
 mod normalize;
 mod subagent;
 mod subagent_devin;
